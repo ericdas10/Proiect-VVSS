@@ -23,7 +23,8 @@ public class DrinkShopController {
     @FXML private TableColumn<Product, Double> colProdPrice;
     @FXML private TableColumn<Product, CategorieBautura> colProdCategorie;
     @FXML private TableColumn<Product, TipBautura> colProdTip;
-    @FXML private TextField txtProdName, txtProdPrice;
+    @FXML private TextField txtProdPrice;
+    @FXML private TextField txtProdName;
     @FXML private ComboBox<CategorieBautura> comboProdCategorie;
     @FXML private ComboBox<TipBautura> comboProdTip;
 
