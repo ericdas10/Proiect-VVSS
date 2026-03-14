@@ -83,7 +83,7 @@ public class DrinkShopService {
     public void comandaProdus(Product produs) {
         Reteta reteta = retetaService.findById(produs.getId());
 
-        if (!stocService.areSuficient(reteta)) {
+        if (stocService.areSuficient(reteta)) {
             throw new IllegalStateException("Stoc insuficient pentru produsul: " + produs.getNume());
         }
         stocService.consuma(reteta);

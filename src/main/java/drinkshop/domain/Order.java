@@ -34,22 +34,6 @@ public class Order implements Serializable {
         return totalPrice;
     }
 
-    public void setItems(List<OrderItem> items) {
-        this.items = items;
-    }
-
-    public void setTotalPrice(double totalPrice) {
-        this.totalPrice = totalPrice;
-    }
-
-    public void addItem(OrderItem item) {
-        this.items.add(item);
-    }
-
-    public void removeItem(OrderItem item) {
-        this.items.remove(item);
-    }
-
     @Override
     public String toString() {
         return "Order{" +

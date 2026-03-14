@@ -6,7 +6,6 @@ import drinkshop.domain.Stoc;
 import drinkshop.repository.Repository;
 
 import java.util.List;
-import java.util.Map;
 
 public class StocService {
 
@@ -45,14 +44,14 @@ public class StocService {
                     .sum();
 
             if (disponibil < necesar) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     public void consuma(Reteta reteta) {
-        if (!areSuficient(reteta)) {
+        if (areSuficient(reteta)) {
             throw new IllegalStateException("Stoc insuficient pentru rețeta.");
         }
 
