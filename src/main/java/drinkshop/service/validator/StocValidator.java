@@ -1,6 +1,7 @@
 package drinkshop.service.validator;
 
 import drinkshop.domain.Stoc;
+import drinkshop.exceptions.ValidationException;
 
 public class StocValidator implements Validator<Stoc> {
 

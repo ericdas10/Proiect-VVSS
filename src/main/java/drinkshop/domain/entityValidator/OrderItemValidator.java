@@ -1,6 +1,8 @@
-package drinkshop.service.validator;
+package drinkshop.domain.entityValidator;
 
 import drinkshop.domain.OrderItem;
+import drinkshop.exceptions.ValidationException;
+import drinkshop.service.validator.Validator;
 
 public class OrderItemValidator implements Validator<OrderItem> {
 
