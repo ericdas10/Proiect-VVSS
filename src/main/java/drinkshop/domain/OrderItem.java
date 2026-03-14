@@ -24,9 +24,6 @@ public class OrderItem implements Serializable {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
 
     @Override
     public String toString() {

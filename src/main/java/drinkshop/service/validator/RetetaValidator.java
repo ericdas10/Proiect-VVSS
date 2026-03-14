@@ -20,6 +20,7 @@ public class RetetaValidator implements Validator<Reteta> {
         if (ingrediente == null || ingrediente.isEmpty())
             errors.accumulateAndGet("Ingrediente empty!\n", String::concat);
 
+        assert ingrediente != null;
         ingrediente.stream()
                 .filter(entry -> entry.getCantitate() <= 0)
                 .forEach(entry -> {
