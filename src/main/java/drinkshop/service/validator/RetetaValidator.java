@@ -2,6 +2,7 @@ package drinkshop.service.validator;
 
 import drinkshop.domain.IngredientReteta;
 import drinkshop.domain.Reteta;
+import drinkshop.exceptions.ValidationException;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;

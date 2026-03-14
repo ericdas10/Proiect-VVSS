@@ -1,4 +1,4 @@
-package drinkshop.service.validator;
+package drinkshop.exceptions;
 
 public class ValidationException extends RuntimeException {
     public ValidationException(String message) {
