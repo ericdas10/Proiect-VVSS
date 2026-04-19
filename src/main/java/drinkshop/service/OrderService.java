@@ -1,5 +1,6 @@
 package drinkshop.service;
 
+import drinkshop.domain.CategorieBautura;
 import drinkshop.domain.Order;
 import drinkshop.domain.OrderItem;
 import drinkshop.domain.Product;
@@ -41,9 +42,34 @@ public class OrderService {
     }
 
     public double computeTotal(Order o) {
-        return o.getItems().stream()
-                .mapToDouble(i -> productRepo.findOne(i.getProduct().getId()).getPret() * i.getQuantity())
-                .sum();
+        double total = 0.0; // Node 1
+
+        for (OrderItem item : o.getItems()) { // Node 2 (Loop)
+            Product p = productRepo.findOne(item.getProduct().getId());
+            double basePrice = p.getPret();
+            double currentItemTotal = basePrice * item.getQuantity();
+
+            // Ramificație 1: Discount de volum per produs
+            if (item.getQuantity() > 10) { // Node 3
+                currentItemTotal *= 0.9; // Node 4
+            }
+
+            // Ramificație 2: Taxă specială pentru anumite categorii
+            if (p.getCategorie() == CategorieBautura.SMOOTHIE) { // Node 5
+                currentItemTotal += 2.0; // Node 6 (Taxă preparare proaspătă)
+            }
+
+            total += currentItemTotal; // Node 7
+        }
+
+        // Ramificație 3: Praguri de discount pentru comanda totală
+        if (total > 100.0) { // Node 8
+            total -= 10.0; // Node 9
+        } else if (total > 50.0) { // Node 10
+            total -= 5.0; // Node 11
+        }
+
+        return total; // Node 12
     }
 
     public void addItem(Order o, OrderItem item) {
