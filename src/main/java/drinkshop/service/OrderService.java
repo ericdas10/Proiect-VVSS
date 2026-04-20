@@ -42,36 +42,42 @@ public class OrderService {
     }
 
     public double computeTotal(Order o) {
-        double total = 0.0; // Node 1
+        double total = 0.0;
 
-        for (OrderItem item : o.getItems()) { // Node 2 (Loop)
+        for (OrderItem item : o.getItems()) {
             Product p = productRepo.findOne(item.getProduct().getId());
+
+            // PROTECȚIE: Dacă produsul nu există în repo, nu lăsăm programul să crape cu NPE
+            if (p == null) {
+                throw new IllegalArgumentException("Produsul cu ID-ul " +
+                        item.getProduct().getId() + " nu a fost găsit!");
+            }
+
             double basePrice = p.getPret();
             double currentItemTotal = basePrice * item.getQuantity();
 
-            // Ramificație 1: Discount de volum per produs
-            if (item.getQuantity() > 10) { // Node 3
-                currentItemTotal *= 0.9; // Node 4
+            // Discount de volum > 10 bucăți (10%)
+            if (item.getQuantity() > 10) {
+                currentItemTotal *= 0.9;
             }
 
-            // Ramificație 2: Taxă specială pentru anumite categorii
-            if (p.getCategorie() == CategorieBautura.SMOOTHIE) { // Node 5
-                currentItemTotal += 2.0; // Node 6 (Taxă preparare proaspătă)
+            // Taxă preparare Smoothie
+            if (p.getCategorie() == CategorieBautura.SMOOTHIE) {
+                currentItemTotal += 2.0;
             }
 
-            total += currentItemTotal; // Node 7
+            total += currentItemTotal;
         }
 
-        // Ramificație 3: Praguri de discount pentru comanda totală
-        if (total > 100.0) { // Node 8
-            total -= 10.0; // Node 9
-        } else if (total > 50.0) { // Node 10
-            total -= 5.0; // Node 11
+        // Praguri de discount total
+        if (total > 100.0) {
+            total -= 10.0;
+        } else if (total > 50.0) {
+            total -= 5.0;
         }
 
-        return total; // Node 12
+        return total;
     }
-
     public void addItem(Order o, OrderItem item) {
         o.getItems().add(item);
         orderRepo.update(o);

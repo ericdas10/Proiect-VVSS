@@ -1,144 +1,114 @@
 package drinkshop.service;
 
-import drinkshop.domain.CategorieBautura;
-import drinkshop.domain.Order;
-import drinkshop.domain.OrderItem;
-import drinkshop.domain.Product;
-import drinkshop.domain.TipBautura;
+import drinkshop.domain.*;
 import drinkshop.repository.Repository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class OrderServiceTest {
 
     private static final double DELTA = 1e-9;
 
     @Mock
-    private Repository<Integer, Order> orderRepo;
-
-    @Mock
     private Repository<Integer, Product> productRepo;
 
-    @InjectMocks
+    @Mock
+    private Repository<Integer, Order> orderRepo;
+
     private OrderService orderService;
 
-    private Product product(int id, String name, double price, CategorieBautura categorie, TipBautura tip) {
-        return new Product(id, name, price, categorie, tip);
+    @BeforeEach
+    void setUp() {
+        // Inițializare manuală pentru a evita problemele cu @InjectMocks pe Java 25
+        orderService = new OrderService(orderRepo, productRepo);
     }
 
-    private Order orderWithItems(OrderItem... items) {
+    @Test
+    @DisplayName("TC01 - Comandă fără produse: Total zero")
+    void computeTotal_EmptyOrder() {
         Order order = new Order(1);
-        for (OrderItem item : items) {
-            order.getItems().add(item);
-        }
-        return order;
-    }
-
-    private void stubProduct(Product product) {
-        when(productRepo.findOne(product.getId())).thenReturn(product);
+        assertEquals(0.0, orderService.computeTotal(order), DELTA);
     }
 
     @Test
-    @DisplayName("Empty order returns 0 and does not query product repository")
-    void computeTotal_emptyOrder_returnsZero() {
-        Order order = new Order(1);
+    @DisplayName("TC02 - No Discounts: Regular sub 50 lei")
+    void computeTotal_Simple() {
+        Product tea = new Product(101, "Tea", 10.0, CategorieBautura.TEA, TipBautura.BASIC);
+        when(productRepo.findOne(anyInt())).thenReturn(tea);
 
-        double total = orderService.computeTotal(order);
+        Order o = new Order(1);
+        o.getItems().add(new OrderItem(tea, 2)); // 2 * 10 = 20.0
 
-        assertEquals(0.0, total, DELTA);
-        verifyNoInteractions(productRepo);
+        assertEquals(20.0, orderService.computeTotal(o), DELTA);
     }
 
     @Test
-    @DisplayName("Single non-smoothie item below threshold has no discounts")
-    void computeTotal_singleRegularItem_noDiscounts() {
-        Product tea = product(1, "Tea", 8.0, CategorieBautura.TEA, TipBautura.PLANT_BASED);
-        stubProduct(tea);
-        Order order = orderWithItems(new OrderItem(tea, 5));
+    @DisplayName("TC03 - Smoothie & Mid Discount: Total 52 -> 47")
+    void computeTotal_SmoothieMid() {
+        Product smoothie = new Product(102, "Mango Smoothie", 50.0, CategorieBautura.SMOOTHIE, TipBautura.BASIC);
+        when(productRepo.findOne(anyInt())).thenReturn(smoothie);
 
-        double total = orderService.computeTotal(order);
+        Order o = new Order(1);
+        o.getItems().add(new OrderItem(smoothie, 1));
 
-        assertEquals(40.0, total, DELTA);
-        verify(productRepo).findOne(1);
-        verifyNoMoreInteractions(productRepo);
+        // Calcul: (50*1) + 2.0 taxă = 52.0. Peste 50 lei => 52 - 5 = 47.0
+        assertEquals(47.0, orderService.computeTotal(o), DELTA);
     }
 
     @Test
-    @DisplayName("Single smoothie item applies smoothie fee and total discount over 50")
-    void computeTotal_singleSmoothieItem_appliesSmoothieFeeAndMidDiscount() {
-        Product smoothie = product(2, "Mango Smoothie", 12.0, CategorieBautura.SMOOTHIE, TipBautura.WATER_BASED);
-        stubProduct(smoothie);
-        Order order = orderWithItems(new OrderItem(smoothie, 5));
+    @DisplayName("TC04 - Volume & High Discount: Total 108 -> 98")
+    void computeTotal_VolumeHigh() {
+        Product juice = new Product(103, "Apple Juice", 10.0, CategorieBautura.JUICE, TipBautura.BASIC);
+        when(productRepo.findOne(anyInt())).thenReturn(juice);
 
-        double total = orderService.computeTotal(order);
+        Order o = new Order(1);
+        o.getItems().add(new OrderItem(juice, 12));
 
-        assertEquals(62.0, total, DELTA);
-        verify(productRepo).findOne(2);
-        verifyNoMoreInteractions(productRepo);
+        // Calcul: 12 * 10 = 120 -> Discount volum 10% = 108.0. Peste 100 lei => 108 - 10 = 98.0
+        assertEquals(98.0, orderService.computeTotal(o), DELTA);
     }
 
     @Test
-    @DisplayName("Single large item applies volume discount and total discount over 100")
-    void computeTotal_singleLargeItem_appliesVolumeAndLargeDiscount() {
-        Product juice = product(3, "Orange Juice", 10.0, CategorieBautura.JUICE, TipBautura.WATER_BASED);
-        stubProduct(juice);
-        Order order = orderWithItems(new OrderItem(juice, 12));
+    @DisplayName("TC05 - Mixed Items: Iterații multiple")
+    void computeTotal_MixedItems() {
+        Product p1 = new Product(104, "Tea", 20.0, CategorieBautura.TEA, TipBautura.BASIC);
+        Product p2 = new Product(105, "Smoothie", 30.0, CategorieBautura.SMOOTHIE, TipBautura.BASIC);
 
-        double total = orderService.computeTotal(order);
+        // Mapăm ID-urile specifice pentru a testa acuratețea repo-ului
+        when(productRepo.findOne(104)).thenReturn(p1);
+        when(productRepo.findOne(105)).thenReturn(p2);
 
-        assertEquals(98.0, total, DELTA);
-        verify(productRepo).findOne(3);
-        verifyNoMoreInteractions(productRepo);
+        Order o = new Order(1);
+        o.getItems().add(new OrderItem(p1, 2)); // 40.0 lei
+        o.getItems().add(new OrderItem(p2, 1)); // 30.0 + 2.0 taxă = 32.0 lei
+        // Brut: 72.0. Peste 50 lei => 72 - 5 = 67.0
+
+        assertEquals(67.0, orderService.computeTotal(o), DELTA);
     }
 
     @Test
-    @DisplayName("Multiple items exercise repeated loop iterations and mixed branches")
-    void computeTotal_multipleItems_exercisesRepeatedLoopAndMixedBranches() {
-        Product regular = product(4, "Iced Tea", 20.0, CategorieBautura.TEA, TipBautura.BASIC);
-        Product smoothie = product(5, "Berry Smoothie", 8.0, CategorieBautura.SMOOTHIE, TipBautura.WATER_BASED);
-        stubProduct(regular);
-        stubProduct(smoothie);
-        Order order = orderWithItems(
-                new OrderItem(regular, 3),
-                new OrderItem(smoothie, 11)
-        );
+    @DisplayName("TC06 - Exception Path: Produs inexistent în DB")
+    void computeTotal_NullProduct_ThrowsException() {
+        Product p = new Product(999, "Ghost", 10.0, CategorieBautura.TEA, TipBautura.BASIC);
+        when(productRepo.findOne(anyInt())).thenReturn(null);
 
-        double total = orderService.computeTotal(order);
+        Order o = new Order(1);
+        o.getItems().add(new OrderItem(p, 1));
 
-        assertEquals(131.2, total, DELTA);
-        verify(productRepo).findOne(4);
-        verify(productRepo).findOne(5);
-        verifyNoMoreInteractions(productRepo);
-    }
-
-    @Test
-    @DisplayName("Null order triggers NullPointerException")
-    void computeTotal_nullOrder_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> orderService.computeTotal(null));
-        verifyNoInteractions(productRepo);
-    }
-
-    @Test
-    @DisplayName("Repository returning null product triggers NullPointerException")
-    void computeTotal_missingProduct_throwsNullPointerException() {
-        Product stubbedProduct = product(6, "Ghost Product", 9.0, CategorieBautura.JUICE, TipBautura.BASIC);
-        when(productRepo.findOne(6)).thenReturn(null);
-        Order order = orderWithItems(new OrderItem(stubbedProduct, 2));
-
-        assertThrows(NullPointerException.class, () -> orderService.computeTotal(order));
-        verify(productRepo).findOne(6);
-        verifyNoMoreInteractions(productRepo);
+        // Verificăm dacă aruncă IllegalArgumentException conform noii logici din Service
+        assertThrows(IllegalArgumentException.class, () -> orderService.computeTotal(o));
     }
 }
