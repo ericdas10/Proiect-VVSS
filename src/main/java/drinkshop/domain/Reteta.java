@@ -26,6 +26,9 @@ public class Reteta {
         return ingrediente;
     }
 
+    public void setIngrediente(List<IngredientReteta> ingrediente) {
+        this.ingrediente = ingrediente;
+    }
 
     @Override
     public String toString() {

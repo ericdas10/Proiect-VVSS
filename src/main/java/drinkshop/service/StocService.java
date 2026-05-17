@@ -4,15 +4,22 @@ import drinkshop.domain.IngredientReteta;
 import drinkshop.domain.Reteta;
 import drinkshop.domain.Stoc;
 import drinkshop.repository.Repository;
+import drinkshop.service.validator.StocValidator;
+import drinkshop.service.validator.Validator;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StocService {
 
     private final Repository<Integer, Stoc> stocRepo;
 
-    public StocService(Repository<Integer, Stoc> stocRepo) {
+    private final Validator<Stoc> stocValidator;
+
+    public StocService(Repository<Integer, Stoc> stocRepo, Validator<Stoc> stocValidator) {
         this.stocRepo = stocRepo;
+        this.stocValidator = stocValidator;
     }
 
     public List<Stoc> getAll() {
@@ -20,6 +27,7 @@ public class StocService {
     }
 
     public void add(Stoc s) {
+        stocValidator.validate(s);
         stocRepo.save(s);
     }
 
@@ -44,14 +52,14 @@ public class StocService {
                     .sum();
 
             if (disponibil < necesar) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public void consuma(Reteta reteta) {
-        if (areSuficient(reteta)) {
+        if (!areSuficient(reteta)) {
             throw new IllegalStateException("Stoc insuficient pentru rețeta.");
         }
 
@@ -59,9 +67,12 @@ public class StocService {
             String ingredient = e.getDenumire();
             double necesar = e.getCantitate();
 
-            List<Stoc> ingredienteStoc = stocRepo.findAll().stream()
-                    .filter(s -> s.getIngredient().equalsIgnoreCase(ingredient))
-                    .toList();
+            List<Stoc> ingredienteStoc = new ArrayList<>();
+            for (Stoc stoc : stocRepo.findAll()) {
+                if (stoc.getIngredient().equalsIgnoreCase(ingredient)) {
+                    ingredienteStoc.add(stoc);
+                }
+            }
 
             double ramas = necesar;
 

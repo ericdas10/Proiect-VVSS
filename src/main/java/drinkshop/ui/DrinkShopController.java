@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DrinkShopController {
@@ -23,8 +24,7 @@ public class DrinkShopController {
     @FXML private TableColumn<Product, Double> colProdPrice;
     @FXML private TableColumn<Product, CategorieBautura> colProdCategorie;
     @FXML private TableColumn<Product, TipBautura> colProdTip;
-    @FXML private TextField txtProdPrice;
-    @FXML private TextField txtProdName;
+    @FXML private TextField txtProdName, txtProdPrice;
     @FXML private ComboBox<CategorieBautura> comboProdCategorie;
     @FXML private ComboBox<TipBautura> comboProdTip;
 
@@ -120,13 +120,20 @@ public class DrinkShopController {
             alert.setHeaderText("Selectati o reteta pentru care adugati un produs");
             alert.showAndWait();
             return;
-        }else
-        if (!service.getAllProducts().stream().filter(p->p.getId()==r.getId()).toList().isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Error");
-            alert.setHeaderText("Exista un produs cu reteta adaugata.");
-            alert.showAndWait();
-            return;
+        }else {
+            List<Product> list = new ArrayList<>();
+            for (Product p : service.getAllProducts()) {
+                if (p.getId() == r.getId()) {
+                    list.add(p);
+                }
+            }
+            if (!list.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Error");
+                alert.setHeaderText("Exista un produs cu reteta adaugata.");
+                alert.showAndWait();
+                return;
+            }
         }
         Product p = new Product(r.getId(),
                 txtProdName.getText(),

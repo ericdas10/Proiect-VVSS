@@ -1,7 +1,6 @@
 package drinkshop.service.validator;
 
 import drinkshop.domain.Stoc;
-import drinkshop.exceptions.ValidationException;
 
 public class StocValidator implements Validator<Stoc> {
 
@@ -9,6 +8,9 @@ public class StocValidator implements Validator<Stoc> {
     public void validate(Stoc stoc) {
 
         String errors = "";
+
+        if (stoc == null)
+            errors +="Stoc null\n";
 
         if (stoc.getId() <= 0)
             errors += "ID invalid!\n";

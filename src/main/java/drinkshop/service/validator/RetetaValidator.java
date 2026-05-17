@@ -2,7 +2,6 @@ package drinkshop.service.validator;
 
 import drinkshop.domain.IngredientReteta;
 import drinkshop.domain.Reteta;
-import drinkshop.exceptions.ValidationException;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,6 +13,9 @@ public class RetetaValidator implements Validator<Reteta> {
 
         AtomicReference<String> errors = new AtomicReference<>("");
 
+        if (reteta == null)
+            errors.accumulateAndGet("Reteta null\n", String::concat);
+
         if (reteta.getId() <= 0)
             errors.accumulateAndGet("Product ID invalid!\n", String::concat);
 
@@ -21,7 +23,6 @@ public class RetetaValidator implements Validator<Reteta> {
         if (ingrediente == null || ingrediente.isEmpty())
             errors.accumulateAndGet("Ingrediente empty!\n", String::concat);
 
-        assert ingrediente != null;
         ingrediente.stream()
                 .filter(entry -> entry.getCantitate() <= 0)
                 .forEach(entry -> {

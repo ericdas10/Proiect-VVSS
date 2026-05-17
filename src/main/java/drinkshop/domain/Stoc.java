@@ -7,7 +7,7 @@ public class Stoc {
     private double cantitate;
     private double stocMinim;
 
-    public Stoc(int id, String ingredient, int cantitate, int stocMinim) {
+    public Stoc(int id, String ingredient, double cantitate, double stocMinim) {
         this.id = id;
         this.ingredient = ingredient;
         this.cantitate = cantitate;
@@ -32,14 +32,22 @@ public class Stoc {
     }
 
     // --- setters ---
+    public void setIngredient(String ingredient) {
+        this.ingredient = ingredient;
+    }
 
     public void setCantitate(double cantitate) {
         this.cantitate = cantitate;
     }
 
-
+    public void setStocMinim(double stocMinim) {
+        this.stocMinim = stocMinim;
+    }
 
     // --- helper methods (safe to keep in entity) ---
+    public boolean isSubMinim() {
+        return cantitate < stocMinim;
+    }
 
     @Override
     public String toString() {
